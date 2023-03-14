@@ -5,11 +5,22 @@ from pyGLV.GL.objimporter.mesh import Mesh
 
 class Wavefront:
     """
-    Class to import a Wavefront .obj file
+    Imports a Wavefront .obj file.
 
-    Most common .obj file formats are supported.
+    Most common .obj file formats, as described in https://en.wikipedia.org/wiki/Wavefront_.obj_file, are supported.
+    Most common .mtl formats, as described in http://paulbourke.net/dataformats/mtl/, are also supported.
     """
-    def __init__(self, file_path) -> None:
+    def __init__(self, file_path:str, encoding:str = "utf-8") -> None:
+        """
+        Opens the .obj file and parses the meshes found in it, along with their materials
+        
+        Parameters
+        ----------
+        file_path : str
+            The file path of .obj file to import.
+        encoding : str, default 'utf-8'
+            The encoding of the .obj file.
+        """
         self.__file_path = file_path
         self.__mtllibs = []
         self.materials = {}
@@ -35,7 +46,7 @@ class Wavefront:
             "usemtl" : self.__parse_use_material,
         }
 
-        self.__parse_from_file()
+        self.__parse_from_file(encoding)
 
         self.__convert_obj_meshes_to_meshes()
 
@@ -43,13 +54,13 @@ class Wavefront:
         if len(self.__obj_mesh_list) > 0:
             return self.__obj_mesh_list[len(self.__obj_mesh_list)-1]
         else:
-            current_mesh = WavefrontObjectMesh()
+            current_mesh = WavefrontObjectMesh("")
             self.__obj_mesh_list.append(current_mesh)
             return current_mesh 
     
-    def __parse_from_file(self) -> None:
+    def __parse_from_file(self, encoding:str) -> None:
         try:
-            with codecs.open(self.__file_path, encoding='utf-8') as f:
+            with codecs.open(self.__file_path, encoding=encoding) as f:
                 
                 line_number = 0
                 # Parse file lines
@@ -59,7 +70,7 @@ class Wavefront:
                     line = line.strip()
 
                     # Line is comment? Skip
-                    if line[0] == "#" or len(line)<=1:
+                    if len(line)<1 or line[0] == "#":
                         continue
 
                     parse_function = self.__parse_dispatch.get(line.split(' ')[0], self.__parse_unknown)
